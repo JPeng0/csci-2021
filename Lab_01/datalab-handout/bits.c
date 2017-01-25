@@ -177,7 +177,7 @@ int bitXor(int x, int y) {
      * Using DeMorgan's Laws: A|B = ~(~(A|B)) = ~((~A)&(~B))
      * Thus, A^B = ~(~(A&(~B)) & ~((~A)&B)).
      */
-  return ~(~(x&(~y)) & ~((~x)&y));
+     return ~(~(x&(~y)) & ~((~x)&y));
 }
 /*
  * evenBits - return word with all even-numbered bits set to 1
@@ -186,7 +186,18 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int evenBits(void) {
-  return 2;
+    /* Exploit fact that int with all even-numbered bits set to 1 is 0x555555.
+     * Use lshift and xor to set last bye of int to 0x55 one byte at a time. */
+    int mask = 0x55;
+    int byte_size = 8;
+    int ans = mask;
+    ans = ans << byte_size;
+    ans = ans ^ mask;
+    ans = ans << byte_size;
+    ans = ans ^ mask;
+    ans = ans << byte_size;
+    ans = ans ^ mask;
+    return ans;
 }
 /*
  * leastBitPos - return a mask that marks the position of the
