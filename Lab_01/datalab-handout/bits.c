@@ -218,7 +218,8 @@ int leastBitPos(int x) {
  *   Rating: 2
  */
 int isEqual(int x, int y) {
-  return 2;
+    /* Explit fact that A^B = 0 iff A = B. */
+    return !(x^y);
 }
 /*
  * fitsBits - return 1 if x can be represented as an
