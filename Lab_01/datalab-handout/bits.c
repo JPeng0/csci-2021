@@ -172,7 +172,12 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+    /* Use the definition of xor and DeMorgan's Laws.
+     * Definition of ^: A^B = (A&(~B)) | ((~A)&B).
+     * Using DeMorgan's Laws: A|B = ~(~(A|B)) = ~((~A)&(~B))
+     * Thus, A^B = ~(~(A&(~B)) & ~((~A)&B)).
+     */
+  return ~(~(x&(~y)) & ~((~x)&y));
 }
 /*
  * evenBits - return word with all even-numbered bits set to 1
