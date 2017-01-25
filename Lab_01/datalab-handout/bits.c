@@ -208,7 +208,10 @@ int evenBits(void) {
  *   Rating: 2
  */
 int leastBitPos(int x) {
-  return 2;
+    /* Take advatange of the fact that 1's will cascade down and leave 0's in their wake
+     * when adding 1 to a binary number. Thus everything up to the cascadeed 1 will be
+     * a 0, and everything past will be oppostive of x. */
+    return x & (~x + 1);
 }
 /*
  * isEqual - return 1 if x == y, and 0 otherwise
