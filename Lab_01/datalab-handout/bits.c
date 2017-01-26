@@ -325,7 +325,21 @@ int multFiveEighths(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+    /* Exploit fact that x <= y iff x < y + 1 iff x - y - 1 < 0.
+     * Exploit fact that for two's compliment, ~y = -y - 1.
+     * Due to overflow, two special cases:
+     *    If x is neg and y is postive should default to true.
+     *    If x is positve and y is negative, should default to false.
+     */
+    int sign_x = x >> 31;
+    int sign_y = y >> 31;
+    int x_neg_y_pos = sign_x & (~sign_y);   // -1 if true, 0 otherwise.
+    int x_pos_y_neg = (~sign_x) & sign_y;   // -1 if true, 0 otherwise.
+
+    int diff = x + (~y);
+    int sign_diff = diff >> 31;     // -1 if diff is neg, 0 if diff is pos or 0.
+
+    return (!x_pos_y_neg) & ( (x_neg_y_pos & 1) | (sign_diff & 1) );
 }
 /*
  * logicalNeg - implement the ! operator, using all of
