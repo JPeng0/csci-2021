@@ -246,17 +246,11 @@ int fitsBits(int x, int n) {
     return is_all_ones | is_all_zeros;
 }
 /*
-
  * reverseBytes - reverse the bytes of x
-
  *   Example: reverseBytes(0x01020304) = 0x04030201
-
  *   Legal ops: ! ~ & ^ | + << >>
-
  *   Max ops: 25
-
  *   Rating: 3
-
  */
 int reverseBytes(int x) {
   return 2;
@@ -269,7 +263,13 @@ int reverseBytes(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+    /* Explit arithmatic right shift and fact that shifting 1 bit less than
+     * total bits will result in -1 the int is negative or 0 if the int positive.
+     * Special case when x is 0.
+     */
+    int is_zero = !x;
+    int sign = x >> 31;     // -1 if x is neg, 0 if x is pos.
+    return (!sign) & (!is_zero);
 }
 /*
  * multFiveEighths - multiplies by 5/8 rounding toward 0.
