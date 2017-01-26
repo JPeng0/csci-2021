@@ -253,7 +253,26 @@ int fitsBits(int x, int n) {
  *   Rating: 3
  */
 int reverseBytes(int x) {
-  return 2;
+    /* Iteratively cycle bytes using shift and a mask exposing only the first byte. */
+    int byte = 8;
+    int mask = 0xFF;             // Only expose first byte.
+
+    // First byte (shifted).
+    int ans = (x & mask) << byte;
+
+    // Second byte (shifted).
+    x = x >> byte;
+    ans = (ans | (x & mask)) << byte;
+
+    // Third byte (shifted).
+    x = x >> byte;
+    ans = (ans | (x & mask)) << byte;
+
+    // Fourth byte (not shifted).
+    x = x >> byte;
+    ans = ans | (x & mask);
+
+    return ans;
 }
 /*
  * isPositive - return 1 if x > 0, return 0 otherwise
