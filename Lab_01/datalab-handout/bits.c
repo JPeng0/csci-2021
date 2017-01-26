@@ -302,7 +302,20 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int multFiveEighths(int x) {
-  return 2;
+    /* Exploit fact that 5 = 2^2 + 2^0 and 8 = 2^3 and the fact that using shifts,
+     * we can replicate multiplying and dividing by powers of 2.
+     * Distrubuting it out, we have x*5/8 = (x*2^2 + x) / 2^3.
+     * We introduce a bias as described in the book to round towards 0. The since we
+     * are dividing by 2^3, the bias is 2^3 - 1 = 7. We apply the bias iff x is negative
+     * using a mask.
+     */
+    int bias = 7;
+    int sign_mask = x >> 31;
+    int applied_bias = bias & sign_mask;
+
+    int ans = (x << 2) + x;
+    ans = (ans + applied_bias) >> 3;
+    return ans;
 }
 /*
  * isLessOrEqual - if x <= y  then return 1, else return 0
