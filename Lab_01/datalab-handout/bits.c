@@ -221,7 +221,7 @@ int leastBitPos(int x) {
  *   Rating: 2
  */
 int isEqual(int x, int y) {
-    /* Explit fact that A^B = 0 iff A = B. */
+    /* Exploit fact that A^B = 0 iff A = B. */
     return !(x^y);
 }
 /*
@@ -234,7 +234,16 @@ int isEqual(int x, int y) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+    /* Exploit fact that after shifting a two's compliment number (n-1) bits to right,
+     * the remaining bits will have to all be the same sign if the number can fit into
+     * n bits.
+     */
+    int head = x >> (n + (~0));
+
+    int is_all_zeros = !head;
+    int is_all_ones = !((~0) ^ head);
+
+    return is_all_ones | is_all_zeros;
 }
 /*
 
