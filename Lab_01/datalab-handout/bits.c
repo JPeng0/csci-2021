@@ -350,7 +350,13 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int logicalNeg(int x) {
-  return 2;
+    /* Cascade down any 1's in x to lsb by offsetting by half each cascade. */
+    int result = (x >> 16) | x;
+    result = (result >> 8) | result;
+    result = (result >> 4) | result;
+    result = (result >> 2) | result;
+    result = (result >> 1) | result;
+    return (result ^ 1) & 1;
 }
 /*
  * tc2sm - Convert from two's complement to sign-magnitude
@@ -362,7 +368,14 @@ int logicalNeg(int x) {
  *   Rating: 4
  */
 int tc2sm(int x) {
-  return 2;
+    /* Exploit fact that ~x + 1 = -x.
+     * Exploit fact that using a mask we can select the inversion iff x is negative.
+     */
+    int sign = x >> 31;             // All bits match msb of x.
+    int sign_mask = 1 << 31;        // Only sign bit is set.
+    int inverted = (~x + 1) | sign_mask;
+
+    return (x & ~sign) | (inverted & sign);
 }
 /*
  * leftBitCount - returns count of number of consective 1's in
