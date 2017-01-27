@@ -386,7 +386,39 @@ int tc2sm(int x) {
  *   Rating: 4
  */
 int leftBitCount(int x) {
-  return 2;
+    /* Exploit cascading of 1 to toggle all non-leading 1 bits to 1 then invert to get
+     * only leading 1's set to 1, and the rest set 0.
+     * Use sideways addition to count number of 1 bits.
+     */
+
+    // Initializtion of variables for sideways addition.
+    int count;
+    int step1 = (0x55 << 8) | 0x55;
+    int step2 = (0x33 << 8) | 0x33;
+    int step3 = (0x0F << 8) | 0x0F;
+    int step4 = (0xFF << 16) | 0xFF;    // step4 = 0x00FF00FF
+    int step5 = (0xFF << 8) | 0xFF;     // step5 = 0x0000FFFF
+    step1 = (step1 << 16) |step1;       // step1 = 0x55555555
+    step2 = (step2 << 16) |step2;       // step2 = 0x33333333
+    step3 = (step3 << 16) |step3;       // step3 = 0x0F0F0F0F
+
+    // Toggle non-leading 1's to 0.
+    x = ~x;
+    x = x | (x >> 1);
+    x = x | (x >> 2);
+    x = x | (x >> 4);
+    x = x | (x >> 8);
+    x = x | (x >> 16);  // Leading 1's are all 0, everything else set to 1.
+    x = ~x;             // Leading 1's are the only thing set to 1.
+
+    // Sideways addition.
+    count = (step1 & x) + (step1 & (x >> 1));
+    count = (step2 & count) + (step2 & (count >> 2));
+    count = (step3 & count) + (step3 & (count >> 4));
+    count = (step4 & count) + (step4 & (count >> 8));
+    count = (step5 & count) + (step5 & (count >> 16));
+
+    return count;
 }
 /*
  * float_neg - Return bit-level equivalent of expression -f for
