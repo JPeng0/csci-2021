@@ -432,7 +432,18 @@ int leftBitCount(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+    /* Exploit fact that interpreting an IEEE an unsigned integer, after shifting left
+     * 1 bit, then any number (strictly) larger than the number with all exp bits
+     * set to 1 (also shifted left 1 bit) will be a special case.
+     */
+    unsigned special_case = 0xFF000000;         // All bits in exp set to 1, rest 0 (shifted to left by 1).
+    unsigned sign_bit = 0x80000000;             // Leading bit set to 1, rest 0.
+
+    if ((uf << 1) <= special_case)      // If not a special case...
+        uf = uf ^ sign_bit;
+
+
+    return uf;
 }
 /*
  * float_half - Return bit-level equivalent of expression 0.5*f for
@@ -446,5 +457,53 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_half(unsigned uf) {
-  return 2;
+    /* Exploit fact that halving a float is the same as decrementing exp if normalized
+     * and shifting frac right if denormalized.
+     * If exp is exactly 1, then follow algorithm for halving denormalized and set exp
+     * to 0.
+     */
+
+    unsigned special_case = 0xFF000000;     // All bits in exp set to 1, rest 0 (shifted to left by 1).
+    unsigned exp_mask = 0x7F800000;         // All exp bits set to 1, rest 0.
+    unsigned frac_mask = 0x007FFFFF;        // All frac bits set to 1, rest 0.
+
+    if ((uf << 1) < special_case) {       // If not a special case...
+
+        unsigned exp_val = (uf & exp_mask) >> 23;  // exp shifted all the way right.
+        unsigned rmd_bit = uf & 1;
+
+        if (exp_val >> 1) {             // If normalized and exp > 1...
+            exp_val -= 1;
+            uf = uf | exp_mask;     // Exp all 1s.
+            uf = uf ^ exp_mask;     // Exp all 0s.
+            uf = uf | (exp_val << 23);
+        } else if (exp_val) {       // If exp == 1...
+            unsigned frac_val = (uf >> 1) & frac_mask;
+            unsigned is_odd = frac_val & 1;
+            
+            // Round to even.
+            if (is_odd && rmd_bit)
+                frac_val += 1;
+
+            uf = uf & (~exp_mask);  // Exp all 0s.
+            uf = uf | frac_mask;    // Frac all 1s.
+            uf = uf ^ frac_mask;    // Frac all 0s.
+            uf = uf | frac_val;
+
+        } else {                    // If denormalized...
+            unsigned frac_val = (uf & frac_mask) >> 1;
+            unsigned is_odd = frac_val & 1;
+
+            // Round to even.
+            if (is_odd && rmd_bit)
+                frac_val += 1;
+
+            uf = uf | frac_mask;    // Frac all 1s.
+            uf = uf ^ frac_mask;    // Frac all 0s.
+            uf = uf | frac_val;
+        }
+
+    }
+
+    return uf;
 }
