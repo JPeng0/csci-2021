@@ -14,7 +14,7 @@ StartFun:
 #/* $begin ncopy-ys */
 ##################################################################
 # ncopy.ys - Copy a src block of len words to dst.
-# Return the number of negative words (<0) contained in src.
+# Return the number of positive words (>0) contained in src.
 #
 # Include your name and ID here.
 #
@@ -35,8 +35,8 @@ ncopy:
 
 Loop:  mrmovq (%rdi), %r10  # read val from src...
   rmmovq %r10, (%rsi)  # ...and store it to dst
-  andq %r10, %r10    # val > 0?
-  jg Npos    # if so, goto Npos:
+  andq %r10, %r10    # val <= 0?
+  jle Npos    # if so, goto Npos:
   irmovq $1, %r10
   addq %r10, %rax    # count++
 Npos:  irmovq $1, %r10
@@ -63,10 +63,10 @@ EndFun:
 ###############################
   .align 8
 src:
-	.quad 1
+	.quad -1
 	.quad -2
 	.quad 3
-	.quad -4
+	.quad 4
   .quad 0xbcdefa # This shouldn't get moved
 
   .align 16

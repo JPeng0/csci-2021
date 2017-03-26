@@ -42,7 +42,7 @@ if ($opt_n) {
 $randomval = 0;
 # Accumulated count
 $rval = 0;
-$negcount = $n;
+$poscount = 0;
 
 if ($opt_r) {
   $randomval = 1;
@@ -61,19 +61,19 @@ for ($i = 0; $i < $n; $i++) {
     if (int(rand(2)) == 1) {
       $data[$i] = -$data[$i];
       $rval++;
-      $negcount--;
+      $poscount++;
     }
   } else {
     if ($rval < $tval && int(rand(2)) % 2 == 1 ||
   $tval - $rval >= $n - $i) {
       $data[$i] = -$data[$i];
       $rval++;
-      $negcount--;
+      $poscount++;
     }
   }
 }
 
-$rval = $negcount;
+$rval = $poscount;
 
 # Values to put at beginning and end of destination
 $Preval =  "0xbcdefa";
