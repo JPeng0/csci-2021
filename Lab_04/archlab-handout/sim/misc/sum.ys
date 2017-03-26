@@ -9,16 +9,13 @@ halt			# Terminate program
 # Sample linked list
 .align 8
 ele1:
-    .quad 0xa000
+    .quad 0xa00
     .quad ele2
 ele2:
-    .quad 0x0b00
+    .quad 0x0b0
     .quad ele3
 ele3:
-    .quad 0x00c0
-    .quad ele4
-ele4:
-    .quad 0x000d
+    .quad 0x00c
     .quad 0
 
 
