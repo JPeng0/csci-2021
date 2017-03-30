@@ -142,14 +142,14 @@ bool need_valC =
 
 ## What register should be used as the A source?
 word srcA = [
-	icode in { IRRMOVQ, IRMMOVQ, IOPQ, IPUSHQ, IIADDQ  } : rA;
+	icode in { IRRMOVQ, IRMMOVQ, IOPQ, IPUSHQ } : rA;
 	icode in { IPOPQ, IRET } : RRSP;
 	1 : RNONE; # Don't need register
 ];
 
 ## What register should be used as the B source?
 word srcB = [
-	icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ, IIADDQ  } : rB;
+	icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ  } : rB;
 	icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
 	1 : RNONE;  # Don't need register
 ];
