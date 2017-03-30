@@ -1,3 +1,22 @@
+# Kris Swann, swann013
+#
+# iaddq i, rB
+# Fetch
+#		icode:ifun <- M_1[PC]
+#		rA:rB <- M_1[PC+1]
+#		valC <- M_8[PC+2]
+#		valP <- PC + 10
+# Decode
+#		valB <- R[rB]
+# Execute
+#		valE <- valC + valB
+# Memory
+# Write Back
+#		R[rB] <- valE
+# PC Update
+#		PC <- valP
+####################################################################
+
 #/* $begin seq-all-hcl */
 ####################################################################
 #  HCL Description of Control for Single Cycle Y86-64 Processor SEQ   #
@@ -104,13 +123,13 @@ word ifun = [
 	1: imem_ifun;		# Default: get from instruction memory
 ];
 
-bool instr_valid = icode in 
+bool instr_valid = icode in
 	{ INOP, IHALT, IRRMOVQ, IIRMOVQ, IRMMOVQ, IMRMOVQ,
 	       IOPQ, IJXX, ICALL, IRET, IPUSHQ, IPOPQ };
 
 # Does fetched instruction require a regid byte?
 bool need_regids =
-	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ, 
+	icode in { IRRMOVQ, IOPQ, IPUSHQ, IPOPQ,
 		     IIRMOVQ, IRMMOVQ, IMRMOVQ };
 
 # Does fetched instruction require a constant word?
@@ -160,7 +179,7 @@ word aluA = [
 
 ## Select input B to ALU
 word aluB = [
-	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
+	icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL,
 		      IPUSHQ, IRET, IPOPQ } : valB;
 	icode in { IRRMOVQ, IIRMOVQ } : 0;
 	# Other instructions don't need ALU
