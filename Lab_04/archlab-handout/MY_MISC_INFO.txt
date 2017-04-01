@@ -1,0 +1,466 @@
+
+NEW UNROLLED LOOP. CPE: 8.37
+
+# Loop header
+    andq %rdx,%rdx          # len <= 0?
+    jg Loop                 # if so, goto Loop:
+    jmp Done                # else, goto Done:
+Setup:
+    irmovq $1, %rax         # count = 0
+
+Loop:
+    iaddq $-4, %rdx         # len -= 4
+    jge L1                  # if len >= 0, goto L1
+    jmp TSetUp              # else goto TSetUp
+L1:
+    mrmovq (%rdi), %r10     # read val1 from src
+    mrmovq $8(%rdi), %r11   # read val2 from src+8
+    rmmovq %r10, (%rsi)     # store val1 to dest
+    andq %r10, %r10         # val1 > 0?
+    jle L2                  # if not, goto L2
+    iaddq $1, %rax          # count++
+L2:
+    mrmovq $16(%rdi), %r10  # read val3 from src+16
+    rmmovq %r11, $8(%rsi)   # store val2 to dest+8
+    andq %r11, %r11         # val2 > 0?
+    jle L3                  # if not, goto L3
+    iaddq $1, %rax         # count++
+L3:
+    mrmovq $24(%rdi), %r11  # read val4 from src+24
+    rmmovq %r10, $16(%rsi)  # store val3 to dest+16
+    andq %r10, %r10         # val3 > 0?
+    jle L4                  # if not, goto L4
+    iaddq $1, %rax         # count++
+L4:
+    rmmovq %r11, $24(%rsi)  # store val4 to dest+24
+    andq %r11, %r11         # val4 > 0?
+    jle LClean              # if not, goto LClean
+    iaddq $1, %rax          # count++
+LClean:
+    iaddq $32, %rdi         # src += 4
+    iaddq $32, %rsi         # dest += 4
+    jmp Loop                # goto Loop
+
+TSetUp:
+    iaddq $3, %rdx          # correct len
+    jge T1                  # if len >= 0, goto T1
+    jmp Done                # otherwise, goto Done
+
+T1:
+    mrmovq (%rdi), %r10     # read val1 from src
+    mrmovq $8(%rdi), %r11   # read val2 from src+8
+    rmmovq %r10, (%rsi)     # store val1 to dest
+    andq %r10, %r10         # val1 > 0?
+    jle TT1                 # if not, goto TT1
+    iaddq $1, %rax          # count++
+TT1:
+    iaddq $-1, %rdx         # len--
+    jge T2                  # if len >= 0, goto T2
+    jmp Done                # otherwise, goto Done
+T2:
+    mrmovq $16(%rdi), %r10  # read val3 from src+16
+    rmmovq %r11, $8(%rsi)   # store val2 to dest+8
+    andq %r11, %r11         # val2 > 0?
+    jle TT2                 # if not, goto TT2
+    iaddq $1, %rax          # count++
+TT2:
+    iaddq $-1, %rdx         # len--
+    jge T3                  # if len >= 0, goto T3
+    jmp Done                # otherwise, goto Done
+T3:
+    rmmovq %r10, $16(%rsi)  # store val3 to dest+16
+    andq %r10, %r10         # val3 > 0?
+    jle Done                # if not, goto Done
+    iaddq $1, %rax         # count++
+
+
+
+
+
+
+
+
+
+OLD UNROLLED LOOP.
+
+
+cur CPE: 8.81
+
+# Loop header
+    andq %rdx,%rdx          # len <= 0?
+    jg Loop                 # if so, goto Loop:
+    jmp Done                # else, goto Done:
+Setup:
+    xorq %rax,%rax          # count = 0
+
+Loop:
+    mrmovq (%rdi), %r10     # read val1 from src
+    mrmovq $8(%rdi), %r11   # read val2 from src+8
+    rmmovq %r10, (%rsi)     # store val1 to dest
+    andq %r10, %r10         # val1 > 0?
+    jle NC1                 # if not, goto NC1:
+    iaddq $1, %rax          # count++
+NC1:
+    iaddq $-1, %rdx         # len--
+    jg L2                   # if len > 0, goto L2:
+    jmp Done                # else, goto Done:
+L2:
+    mrmovq $16(%rdi), %r10  # read val3 from src+16
+    rmmovq %r11, $8(%rsi)   # store val2 to dest+8
+    andq %r11, %r11         # val2 > 0?
+    jle NC2                 # if not, goto NC2:
+    iaddq $1, %rax          # count++
+NC2:
+    iaddq $-1, %rdx         # len--
+    jg L3                   # if len > 0, goto L3:
+    jmp Done                # else, goto Done:
+L3:
+    mrmovq $24(%rdi), %r11  # read val4 from src+24
+    rmmovq %r10, $16(%rsi)  # store val3 to dest+16
+    andq %r10, %r10         # val3 > 0?
+    jle NC3                 # if not, goto NC3:
+    iaddq $1, %rax          # count++
+NC3:
+    iaddq $-1, %rdx         # len--
+    jg L4                   # if len > 0, goto L4:
+    jmp Done                # else, goto Done:
+L4:
+    mrmovq $32(%rdi), %r10  # read val5 from src+32
+    rmmovq %r11, $24(%rsi)  # store val4 to dest+24
+    andq %r11, %r11         # val4 > 0?
+    jle NC4                 # if not, goto NC4:
+    iaddq $1, %rax          # count++
+NC4:
+    iaddq $-1, %rdx         # len--
+    jg L5                   # if len > 0, goto L5:
+    jmp Done                # else, goto Done:
+L5:
+    mrmovq $40(%rdi), %r11  # read val6 from src+40
+    rmmovq %r10, $32(%rsi)  # store val5 to dest+32
+    andq %r10, %r10         # val5 > 0?
+    jle NC5                 # if not, goto NC5:
+    iaddq $1, %rax          # count++
+NC5:
+    iaddq $-1, %rdx         # len--
+    jg L6                   # if len > 0, goto L6:
+    jmp Done                # else, goto Done:
+L6:
+    mrmovq $48(%rdi), %r10  # read val7 from src+48
+    rmmovq %r11, $40(%rsi)  # store val6 to dest+40
+    andq %r11, %r11         # val6 > 0?
+    jle NC6                 # if not, goto NC6:
+    iaddq $1, %rax          # count++
+NC6:
+    iaddq $-1, %rdx         # len--
+    jg L7                   # if len > 0, goto L7:
+    jmp Done                # else, goto Done:
+L7:
+    mrmovq $56(%rdi), %r11  # read val8 from src+56
+    rmmovq %r10, $48(%rsi)  # store val7 to dest+48
+    andq %r10, %r10         # val7 > 0?
+    jle NC7                 # if not, goto NC7:
+    iaddq $1, %rax          # count++
+NC7:
+    iaddq $-1, %rdx         # len--
+    jg L8                   # if len > 0, goto L7:
+    jmp Done                # else, goto Done:
+L8:
+    rmmovq %r11, $56(%rsi)  # store val8 to dest+56
+    andq %r11, %r11         # val8 > 0?
+    jle NC8                 # if not, goto NC7:
+    iaddq $1, %rax          # count++
+NC8:
+    iaddq $64, %rdi         # src += 8
+    iaddq $64, %rsi         # dest += 8
+    iaddq $-1, %rdx         # len--
+    jg Loop                 # if len > 0, goto Loop:
+
+
+
+
+
+
+
+
+
+
+
+
+WITH A WORKING JUMP TABLE. CPE: 9.27
+
+NEWEST JUMP TABLE DESIGN.
+
+## Loop header
+#    andq %rdx, %rdx            # len > 0?
+#    jg Setup		       # if so, goto Setup:
+#    jmp Done                   # else, goto Done:
+#
+#Setup:
+#    irmovq $0, %rax             # count = 0;
+#
+#    addq %rdx, %rdx
+#    addq %rdx, %rdx
+#    addq %rdx, %rdx             # rdx *= 8
+#
+#    irmovq $136, %r11           # variable for cmov
+#
+#Loop:
+#    rrmovq %rdx, %rcx           # rcx = len
+#    iaddq $-136, %rcx           # rcx -= 136
+#    cmovle %rdx, %rcx           # if rcx <= 0 then rcx = len
+#    cmovg %r11, %rcx            # else rxc = 136
+#    mrmovq Table(%rcx), %r8     # calculate proper jump from table
+#    pushq %r8
+#    ret
+#L17:
+#    mrmovq $128(%rdi), %r10     # read val from src
+#    rmmovq %r10, $128(%rsi)     # store val to dest
+#    andq %r10, %r10             # val > 0?
+#    jle L16                     # Skip next line
+#    iaddq $1, %rax              # count++
+#L16:
+#    mrmovq $120(%rdi), %r10     # read val from src
+#    rmmovq %r10, $120(%rsi)     # store val to dest
+#    andq %r10, %r10             # val > 0?
+#    jle L15                     # Skip next line
+#    iaddq $1, %rax              # count++
+#L15:
+#    mrmovq $112(%rdi), %r10     # read val from src
+#    rmmovq %r10, $112(%rsi)     # store val to dest
+#    andq %r10, %r10             #val > 0?
+#    jle L14                     # Skip next line
+#    iaddq $1, %rax              # count++
+#L14:
+#    mrmovq $104(%rdi), %r10     # read val from src
+#    rmmovq %r10, $104(%rsi)     # store val to dest
+#    andq %r10, %r10             # val > 0?
+#    jle L13                     # Skip next line
+#    iaddq $1, %rax              # count++
+# ...
+#L1:
+#    mrmovq (%rdi), %r10         # read val from src
+#    rmmovq %r10, (%rsi)         # store val to dest
+#    andq %r10, %r10             # val > 0?
+#    jle Base                    # Skip next line
+#    iaddq $1, %rax              # count++
+#Base:
+#    iaddq $136, %rdi            # src += 18
+#    iaddq $136, %rsi            # dest += 18
+#    iaddq $-136, %rdx           # len -= 18
+#    jg Loop                     # if len > 0, goto Loop:
+
+
+
+
+
+OLD JUMP TABLE DESIGN.
+
+#/* $begin ncopy-ys */
+##################################################################
+# ncopy.ys - Copy a src block of len words to dst.
+# Return the number of positive words (>0) contained in src.
+#
+# Kris Swann, swann013
+#
+# Insert iaddq wherever possible.
+# Apply loop unrolling.
+# Move jumps to right after subtracting from len.
+#
+##################################################################
+# Do not modify this portion
+# Function prologue.
+# %rdi = src, %rsi = dst, %rdx = len
+ncopy:
+
+##################################################################
+# You can modify this portion
+
+##################################################################
+# ORIGINAL
+#  # Loop header
+#  xorq %rax,%rax        # count = 0;
+#  andq %rdx,%rdx        # len <= 0?
+#  jle Done              # if so, goto Done:
+#
+#Loop:
+#  mrmovq (%rdi), %r10   # read val from src
+#  andq %r10, %r10       # val <= 0?
+#  jle Npos              # if so, goto Npos:
+#  iaddq $1, %rax        # count ++
+#Npos:
+#  rmmovq %r10, (%rsi)   # store val to dst
+#  iaddq $-1, %rdx       # len--
+#  iaddq $8, %rdi        # src++
+#  iaddq $8, %rsi        # dst++
+#  andq %rdx,%rdx        # len > 0?
+#  jg Loop               # if so, goto Loop:
+##################################################################
+
+
+# Loop header
+    irmovq $0, %rax             # count = 0;
+    #andq %rdx, %rdx            # len <= 0?
+    #jle Done                   # if so, goto Done:
+
+    addq %rdx, %rdx
+    addq %rdx, %rdx
+    addq %rdx, %rdx             # rdx *= 8
+
+    irmovq $144, %r11           # variable for cmov
+
+
+
+Loop:
+    rrmovq %rdx, %rcx           # rcx = len
+    iaddq $-144, %rcx           # rcx -= 144
+    cmovle %rdx, %rcx           # if rcx <= 0 then rcx = len
+    cmovg %r11, %rcx            # else rxc = 144
+    mrmovq Table(%rcx), %r8     # calculate proper jump from table
+    pushq %r8
+    ret
+L18:
+    mrmovq $136(%rdi), %r10     # read val from src
+    rmmovq %r10, $136(%rsi)     # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L17                     # Skip next line
+    iaddq $1, %rax              # count++
+L17:
+    mrmovq $128(%rdi), %r10     # read val from src
+    rmmovq %r10, $128(%rsi)     # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L16                     # Skip next line
+    iaddq $1, %rax              # count++
+L16:
+    mrmovq $120(%rdi), %r10     # read val from src
+    rmmovq %r10, $120(%rsi)     # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L15                     # Skip next line
+    iaddq $1, %rax              # count++
+L15:
+    mrmovq $112(%rdi), %r10     # read val from src
+    rmmovq %r10, $112(%rsi)     # store val to dest
+    andq %r10, %r10             #val > 0?
+    jle L14                     # Skip next line
+    iaddq $1, %rax              # count++
+L14:
+    mrmovq $104(%rdi), %r10     # read val from src
+    rmmovq %r10, $104(%rsi)     # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L13                     # Skip next line
+    iaddq $1, %rax              # count++
+L13:
+    mrmovq $96(%rdi), %r10      # read val from src
+    rmmovq %r10, $96(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L12                     # Skip next line
+    iaddq $1, %rax              # count++
+L12:
+    mrmovq $88(%rdi), %r10      # read val from src
+    rmmovq %r10, $88(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L11                     # Skip next line
+    iaddq $1, %rax              # count++
+L11:
+    mrmovq $80(%rdi), %r10      # read val from src
+    rmmovq %r10, $80(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L10                     # Skip next line
+    iaddq $1, %rax              # count++
+L10:
+    mrmovq $72(%rdi), %r10      # read val from src
+    rmmovq %r10, $72(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L9                      # Skip next line
+    iaddq $1, %rax              # count++
+L9:
+    mrmovq $64(%rdi), %r10      # read val from src
+    rmmovq %r10, $64(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L8                      # Skip next line
+    iaddq $1, %rax              # count++
+L8:
+    mrmovq $56(%rdi), %r10      # read val from src
+    rmmovq %r10, $56(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L7                      # Skip next line
+    iaddq $1, %rax              # count++
+L7:
+    mrmovq $48(%rdi), %r10      # read val from src
+    rmmovq %r10, $48(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L6                      # Skip next line
+    iaddq $1, %rax              # count++
+L6:
+    mrmovq $40(%rdi), %r10      # read val from src
+    rmmovq %r10, $40(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L5                      # Skip next line
+    iaddq $1, %rax              # count++
+L5:
+    mrmovq $32(%rdi), %r10      # read val from src
+    rmmovq %r10, $32(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L4                      # Skip next line
+    iaddq $1, %rax              # count++
+L4:
+    mrmovq $24(%rdi), %r10      # read val from src
+    rmmovq %r10, $24(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L3                      # Skip next line
+    iaddq $1, %rax              # count++
+L3:
+    mrmovq $16(%rdi), %r10      # read val from src
+    rmmovq %r10, $16(%rsi)      # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L2                      # Skip next line
+    iaddq $1, %rax              # count++
+L2:
+    mrmovq $8(%rdi), %r10       # read val from src
+    rmmovq %r10, $8(%rsi)       # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle L1                      # Skip next line
+    iaddq $1, %rax              # count++
+L1:
+    mrmovq (%rdi), %r10         # read val from src
+    rmmovq %r10, (%rsi)         # store val to dest
+    andq %r10, %r10             # val > 0?
+    jle Base                    # Skip next line
+    iaddq $1, %rax              # count++
+Base:
+    iaddq $144, %rdi            # src += 19
+    iaddq $144, %rsi            # dest += 19
+    iaddq $-144, %rdx           # len -= 19
+    jg Loop                     # if len > 0, goto Loop:
+
+
+##################################################################
+# Do not modify the following section of code
+# Function epilogue.
+Done:
+  ret
+##################################################################
+# Keep the following label at the end of your function
+End:
+
+.align 8
+Table:
+    .quad Done
+    .quad L1
+    .quad L2
+    .quad L3
+    .quad L4
+    .quad L5
+    .quad L6
+    .quad L7
+    .quad L8
+    .quad L9
+    .quad L10
+    .quad L11
+    .quad L12
+    .quad L13
+    .quad L14
+    .quad L15
+    .quad L16
+    .quad L17
+    .quad L18
+#/* $end ncopy-ys */

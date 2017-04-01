@@ -19,6 +19,8 @@ StartFun:
 # Kris Swann, swann013
 #
 # Insert iaddq wherever possible.
+# Apply loop unrolling.
+# Move jumps to right after subtracting from len.
 #
 ##################################################################
 # Do not modify this portion
@@ -28,23 +30,111 @@ ncopy:
 
 ##################################################################
 # You can modify this portion
-  # Loop header
-  xorq %rax,%rax        # count = 0;
-  andq %rdx,%rdx        # len <= 0?
-  jle Done              # if so, goto Done:
+
+##################################################################
+# ORIGINAL
+#  # Loop header
+#  xorq %rax,%rax        # count = 0;
+#  andq %rdx,%rdx        # len <= 0?
+#  jle Done              # if so, goto Done:
+#
+#Loop:
+#  mrmovq (%rdi), %r10   # read val from src
+#  andq %r10, %r10       # val <= 0?
+#  jle Npos              # if so, goto Npos:
+#  iaddq $1, %rax        # count ++
+#Npos:
+#  rmmovq %r10, (%rsi)   # store val to dst
+#  iaddq $-1, %rdx       # len--
+#  iaddq $8, %rdi        # src++
+#  iaddq $8, %rsi        # dst++
+#  andq %rdx,%rdx        # len > 0?
+#  jg Loop               # if so, goto Loop:
+##################################################################
+
+
+# Loop header
+    andq %rdx,%rdx          # len <= 0?
+    jg Loop                 # if so, goto Loop:
+    jmp Done                # else, goto Done:
+Setup:
+    #xorq %rax,%rax          # count = 0
+    rrmovq %rdx, %rax        # count = len
+    iaddq $1, %rax           # count += 1
 
 Loop:
-  mrmovq (%rdi), %r10   # read val from src
-  andq %r10, %r10       # val <= 0?
-  jle Npos              # if so, goto Npos:
-  iaddq $1, %rax        # count ++
-Npos:
-  rmmovq %r10, (%rsi)   # store val to dst
-  iaddq $-1, %rdx       # len--
-  iaddq $8, %rdi        # src++
-  iaddq $8, %rsi        # dst++
-  andq %rdx,%rdx        # len > 0?
-  jg Loop               # if so, goto Loop:
+    mrmovq (%rdi), %r10     # read val1 from src
+    mrmovq $8(%rdi), %r11   # read val2 from src+8
+    rmmovq %r10, (%rsi)     # store val1 to dest
+    andq %r10, %r10         # val1 > 0?
+    jg L1                   # if not, goto L1:
+    iaddq $-1, %rax         # count--
+L1:
+    iaddq $-1, %rdx         # len--
+    jg L2                   # if len > 0, goto L2:
+    jmp Done                # else, goto Done:
+L2:
+    mrmovq $16(%rdi), %r10  # read val3 from src+16
+    rmmovq %r11, $8(%rsi)   # store val2 to dest+8
+    andq %r11, %r11         # val2 > 0?
+    jg L3                   # if not, goto L3:
+    iaddq $-1, %rax         # count--
+L3:
+    iaddq $-1, %rdx         # len--
+    jg L4                   # if len > 0, goto L4:
+    jmp Done                # else, goto Done:
+L4:
+    mrmovq $24(%rdi), %r11  # read val4 from src+24
+    rmmovq %r10, $16(%rsi)  # store val3 to dest+16
+    andq %r10, %r10         # val3 > 0?
+    jg L5                   # if not, goto L5:
+    iaddq $-1, %rax         # count--
+L5:
+    iaddq $-1, %rdx         # len--
+    jg L6                   # if len > 0, goto L6:
+    jmp Done                # else, goto Done:
+L6:
+    mrmovq $32(%rdi), %r10  # read val5 from src+32
+    rmmovq %r11, $24(%rsi)  # store val4 to dest+24
+    andq %r11, %r11         # val4 > 0?
+    jg L7                   # if not, goto L7:
+    iaddq $-1, %rax         # count--
+L7:
+    iaddq $-1, %rdx         # len--
+    jg L8                   # if len > 0, goto L8:
+    jmp Done                # else, goto Done:
+L8:
+    mrmovq $40(%rdi), %r11  # read val6 from src+40
+    rmmovq %r10, $32(%rsi)  # store val5 to dest+32
+    andq %r10, %r10         # val5 > 0?
+    jg L9                   # if not, goto L9:
+    iaddq $-1, %rax         # count--
+L9:
+    iaddq $-1, %rdx         # len--
+    jg L10                   # if len > 0, goto L10:
+    jmp Done                # else, goto Done:
+L10:
+    mrmovq $48(%rdi), %r10  # read val7 from src+48
+    rmmovq %r11, $40(%rsi)  # store val6 to dest+40
+    andq %r11, %r11         # val6 > 0?
+    jg L11                  # if not, goto L11:
+    iaddq $-1, %rax         # count--
+L11:
+    iaddq $-1, %rdx         # len--
+    jg L12                  # if len > 0, goto L12:
+    jmp Done                # else, goto Done:
+L12:
+    rmmovq %r10, $48(%rsi)  # store val7 to dest+48
+    andq %r10, %r10         # val3 > 0?
+    jg L13                  # if not, goto L13:
+    iaddq $-1, %rax         # count--
+L13:
+    iaddq $56, %rdi         # src += 7
+    iaddq $56, %rsi         # dest += 7
+    iaddq $-1, %rdx         # len--
+    jg Loop                 # if len > 0, goto Loop:
+
+
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
@@ -61,35 +151,35 @@ EndFun:
 ###############################
   .align 8
 src:
-	.quad -1
-	.quad 2
+	.quad 1
+	.quad -2
 	.quad 3
 	.quad 4
 	.quad -5
 	.quad -6
-	.quad -7
-	.quad -8
+	.quad 7
+	.quad 8
 	.quad 9
 	.quad -10
-	.quad 11
+	.quad -11
 	.quad -12
-	.quad -13
+	.quad 13
 	.quad 14
 	.quad -15
 	.quad -16
 	.quad 17
-	.quad -18
+	.quad 18
 	.quad -19
 	.quad 20
 	.quad 21
-	.quad -22
+	.quad 22
 	.quad -23
 	.quad -24
-	.quad 25
-	.quad 26
+	.quad -25
+	.quad -26
 	.quad 27
 	.quad -28
-	.quad 29
+	.quad -29
 	.quad 30
 	.quad -31
 	.quad -32
@@ -103,25 +193,25 @@ src:
 	.quad -40
 	.quad -41
 	.quad -42
-	.quad 43
+	.quad -43
 	.quad 44
-	.quad -45
+	.quad 45
 	.quad -46
 	.quad 47
-	.quad -48
+	.quad 48
 	.quad 49
 	.quad -50
-	.quad -51
-	.quad -52
-	.quad -53
-	.quad 54
+	.quad 51
+	.quad 52
+	.quad 53
+	.quad -54
 	.quad 55
 	.quad 56
-	.quad 57
-	.quad 58
-	.quad 59
+	.quad -57
+	.quad -58
+	.quad -59
 	.quad 60
-	.quad 61
+	.quad -61
 	.quad 62
 	.quad 63
   .quad 0xbcdefa # This shouldn't get moved
