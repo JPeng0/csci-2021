@@ -19,28 +19,6 @@ ncopy:
 ##################################################################
 # You can modify this portion
 
-##################################################################
-# ORIGINAL
-#  # Loop header
-#  xorq %rax,%rax        # count = 0;
-#  andq %rdx,%rdx        # len <= 0?
-#  jle Done              # if so, goto Done:
-#
-#Loop:
-#  mrmovq (%rdi), %r10   # read val from src
-#  andq %r10, %r10       # val <= 0?
-#  jle Npos              # if so, goto Npos:
-#  iaddq $1, %rax        # count ++
-#Npos:
-#  rmmovq %r10, (%rsi)   # store val to dst
-#  iaddq $-1, %rdx       # len--
-#  iaddq $8, %rdi        # src++
-#  iaddq $8, %rsi        # dst++
-#  andq %rdx,%rdx        # len > 0?
-#  jg Loop               # if so, goto Loop:
-##################################################################
-
-
 # Loop header
     andq %rdx,%rdx          # len <= 0?
     jg Loop                 # if so, goto Loop:
@@ -112,8 +90,6 @@ T3:
     andq %r10, %r10         # val3 > 0?
     jle Done                # if not, goto Done
     iaddq $1, %rax         # count++
-
-
 
 
 ##################################################################
