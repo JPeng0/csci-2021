@@ -1,12 +1,13 @@
-/* 
+/*
  * csim.c - A cache simulator that can replay traces from Valgrind
  *     and output statistics such as number of hits, misses, and
  *     evictions.  The replacement policy is MRU.
  *
+ *  Kris Swann, swann013
  *
  * The function printSummary() is given to print output.
  * Please use this function to print the number of hits, misses and evictions.
- * This is crucial for the driver to evaluate your work. 
+ * This is crucial for the driver to evaluate your work.
  */
 #include <getopt.h>
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 #include <errno.h>
 #include "cachelab.h"
 
-//#define DEBUG_ON 
+//#define DEBUG_ON
 #define ADDRESS_LENGTH 64
 
 /* Type: Memory address */
@@ -54,20 +55,42 @@ int eviction_count = 0;
 unsigned long long int mru_counter = 1;
 
 /* The cache we are simulating */
-cache_t cache;  
+cache_t cache;
 mem_addr_t set_index_mask;
 
-/* 
+/*
  * initCache - Allocate memory, write 0's for valid and tag and MRU
  * also computes the set_index_mask
  */
 void initCache()
 {
+    cache = malloc(S * sizeof(cache_set_t));
+    int i;
+    for (i=0; i<S; i++) {
+        cache[i] = malloc(E * sizeof(cache_line_t));
+        int j;
+        for (j=0; j<E; j++) {
+            cache[i][j].valid = 0;
+            cache[i][j].tag = 0;
+            cache[i][j].mru = 0;
+        }
+    }
 
+    set_index_mask = S - 1;
+
+    if (verbosity) {
+        for (i=0; i<S; i++) {
+            int j;
+            for(j=0;j<E;j++){
+                printf("[%i,%i,%i]",(int)cache[i][j].valid, (int)cache[i][j].tag, (int)cache[i][j].mru);
+            }
+            printf("\n");
+        }
+    }
 }
 
 
-/* 
+/*
  * freeCache - free allocated memory
  */
 void freeCache()
@@ -80,7 +103,7 @@ void freeCache()
 }
 
 
-/* 
+/*
  * accessData - Access data at memory address addr.
  *   If it is already in cache, increast hit_count
  *   If it is not in cache, bring it in cache, increase miss count.
@@ -88,13 +111,68 @@ void freeCache()
  */
 void accessData(mem_addr_t addr)
 {
-     
-   
+    int i;
+    int set_num = (addr >> b) & set_index_mask;
+    int tag = (addr >> (b+s));
+
+    if (verbosity)
+        printf("set:%i, tag:%i\t",set_num, tag);
+
+    for (i=0; i<E; i++){
+        if (cache[set_num][i].tag == tag && cache[set_num][i].valid == 1){
+            hit_count++;
+            cache[set_num][i].mru = mru_counter;
+            mru_counter++;
+
+            if (verbosity)
+                printf("hit ");
+
+            return;
+        }
+    }
+
+    miss_count++;
+    int max_mru = -1;
+    int evicted_line_num = 0;
+
+    if (verbosity)
+        printf("miss ");
+
+    for (i=0; i<E; i++){
+        if (verbosity)
+            printf("(checking tag: %i,%i,%i; cur max_mru: %i)",
+                (int)cache[set_num][i].valid,
+                (int)cache[set_num][i].tag,
+                (int)cache[set_num][i].mru,
+                max_mru);
+        if (cache[set_num][i].valid == 0) {
+            evicted_line_num = i;
+            break;
+        }
+        if ((int) cache[set_num][i].mru > max_mru){
+            if (verbosity)
+                printf("(updating eviced tag: %i)", (int)cache[set_num][i].tag);
+            max_mru = cache[set_num][i].mru;
+            evicted_line_num = i;
+        }
+    }
+
+    if (cache[set_num][evicted_line_num].valid == 1){
+        eviction_count++;
+
+        if (verbosity)
+            printf("eviction (evicted tag:%i)",(int)cache[set_num][evicted_line_num].tag);
+    }
+
+    cache[set_num][evicted_line_num].valid = 1;
+    cache[set_num][evicted_line_num].tag = tag;
+    cache[set_num][evicted_line_num].mru = mru_counter;
+    mru_counter++;
 }
 
 
 /*
- * replayTrace - replays the given trace file against the cache 
+ * replayTrace - replays the given trace file against the cache
  */
 void replayTrace(char* trace_fn)
 {
@@ -111,14 +189,29 @@ void replayTrace(char* trace_fn)
     while( fgets(buf, 1000, trace_fp) != NULL) {
         /* buf[Y] gives the Yth byte in the trace line */
 
-        /* Read address and length from the trace using sscanf 
+        /* Read address and length from the trace using sscanf
            E.g. sscanf(buf+3, "%llx,%u", &addr, &len);
+           Can (and will) ignore length as per the handout specifies.
          */
 
-        /*  
+        /*
          *    ACCESS THE CACHE, i.e. CALL accessData
-		 *    Be careful to handle 'M' accesses	
+         *    Be careful to handle 'M' accesses (it is accessed twice.)
          */
+        if (buf[1] == 'S' || buf[1] == 'L' || buf[1] == 'M'){
+            sscanf(buf+3, "%llx,%u", &addr, &len);
+
+            if (verbosity)
+                printf("%c %llx,%u ", buf[1], addr, len);
+
+            accessData(addr);
+        }
+
+        if (buf[1] == 'M')
+            accessData(addr);
+
+        if (verbosity)
+            putchar('\n');
     }
 
     fclose(trace_fp);
@@ -144,7 +237,7 @@ void printUsage(char* argv[])
 }
 
 /*
- * main - Main routine 
+ * main - Main routine
  */
 int main(int argc, char* argv[])
 {
@@ -184,9 +277,9 @@ int main(int argc, char* argv[])
     }
 
     /* Compute S, E and B from command line args */
-    //S =  ?
-    //B =  ?
- 
+    S = pow(2, s);
+    B = pow(2, b);
+
     /* Initialize cache */
     initCache();
 
@@ -194,7 +287,7 @@ int main(int argc, char* argv[])
     printf("DEBUG: S:%u E:%u B:%u trace:%s\n", S, E, B, trace_file);
     printf("DEBUG: set_index_mask: %llu\n", set_index_mask);
 #endif
-    
+
 	/* Read the trace and access the cache */
     replayTrace(trace_file);
 
