@@ -77,16 +77,6 @@ void initCache()
     }
 
     set_index_mask = S - 1;
-
-    if (verbosity) {
-        for (i=0; i<S; i++) {
-            int j;
-            for(j=0;j<E;j++){
-                printf("[%i,%i,%i]",(int)cache[i][j].valid, (int)cache[i][j].tag, (int)cache[i][j].mru);
-            }
-            printf("\n");
-        }
-    }
 }
 
 
@@ -115,9 +105,6 @@ void accessData(mem_addr_t addr)
     int set_num = (addr >> b) & set_index_mask;
     int tag = (addr >> (b+s));
 
-    if (verbosity)
-        printf("set:%i, tag:%i\t",set_num, tag);
-
     for (i=0; i<E; i++){
         if (cache[set_num][i].tag == tag && cache[set_num][i].valid == 1){
             hit_count++;
@@ -139,19 +126,11 @@ void accessData(mem_addr_t addr)
         printf("miss ");
 
     for (i=0; i<E; i++){
-        if (verbosity)
-            printf("(checking tag: %i,%i,%i; cur max_mru: %i)",
-                (int)cache[set_num][i].valid,
-                (int)cache[set_num][i].tag,
-                (int)cache[set_num][i].mru,
-                max_mru);
         if (cache[set_num][i].valid == 0) {
             evicted_line_num = i;
             break;
         }
         if ((int) cache[set_num][i].mru > max_mru){
-            if (verbosity)
-                printf("(updating eviced tag: %i)", (int)cache[set_num][i].tag);
             max_mru = cache[set_num][i].mru;
             evicted_line_num = i;
         }
@@ -161,7 +140,7 @@ void accessData(mem_addr_t addr)
         eviction_count++;
 
         if (verbosity)
-            printf("eviction (evicted tag:%i)",(int)cache[set_num][evicted_line_num].tag);
+            printf("eviction ");
     }
 
     cache[set_num][evicted_line_num].valid = 1;
@@ -202,17 +181,17 @@ void replayTrace(char* trace_fn)
             sscanf(buf+3, "%llx,%u", &addr, &len);
 
             if (verbosity)
-                printf("%c %llx,%u ", buf[1], addr, len);
+                printf("\n%c %llx,%u ", buf[1], addr, len);
 
             accessData(addr);
         }
 
         if (buf[1] == 'M')
             accessData(addr);
-
-        if (verbosity)
-            putchar('\n');
     }
+
+    if (verbosity)
+        printf("\n");
 
     fclose(trace_fp);
 }
