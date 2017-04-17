@@ -101,52 +101,43 @@ void freeCache()
  */
 void accessData(mem_addr_t addr)
 {
+    int set = set_index_mask & (addr >> b);
+    int tag = addr >> (b+s);
+
     int i;
-    int set_num = (addr >> b) & set_index_mask;
-    int tag = (addr >> (b+s));
-
     for (i=0; i<E; i++){
-        if (cache[set_num][i].tag == tag && cache[set_num][i].valid == 1){
-            hit_count++;
-            cache[set_num][i].mru = mru_counter;
+        if (cache[set][i].tag == tag && cache[set][i].valid){
+            cache[set][i].mru = mru_counter;
             mru_counter++;
-
-            if (verbosity)
-                printf("hit ");
-
+            hit_count++;
             return;
         }
     }
 
-    miss_count++;
-    int max_mru = -1;
-    int evicted_line_num = 0;
+    // If not a hit, must be a miss.
 
-    if (verbosity)
-        printf("miss ");
+    int max_mru = -1;
+    int evicted_line = 0;
 
     for (i=0; i<E; i++){
-        if (cache[set_num][i].valid == 0) {
-            evicted_line_num = i;
+        if (cache[set][i].valid == 0) {     // Intenional for clarity.
+            evicted_line = i;
             break;
         }
-        if ((int) cache[set_num][i].mru > max_mru){
-            max_mru = cache[set_num][i].mru;
-            evicted_line_num = i;
+        if ((int) cache[set][i].mru > max_mru) {    // Casting necessary for comparision.
+            max_mru = cache[set][i].mru;
+            evicted_line = i;
         }
     }
 
-    if (cache[set_num][evicted_line_num].valid == 1){
+    if (cache[set][evicted_line].valid == 1)
         eviction_count++;
 
-        if (verbosity)
-            printf("eviction ");
-    }
-
-    cache[set_num][evicted_line_num].valid = 1;
-    cache[set_num][evicted_line_num].tag = tag;
-    cache[set_num][evicted_line_num].mru = mru_counter;
+    cache[set][evicted_line].valid = 1;
+    cache[set][evicted_line].tag = tag;
+    cache[set][evicted_line].mru = mru_counter;
     mru_counter++;
+    miss_count++;
 }
 
 
@@ -179,19 +170,12 @@ void replayTrace(char* trace_fn)
          */
         if (buf[1] == 'S' || buf[1] == 'L' || buf[1] == 'M'){
             sscanf(buf+3, "%llx,%u", &addr, &len);
-
-            if (verbosity)
-                printf("\n%c %llx,%u ", buf[1], addr, len);
-
             accessData(addr);
         }
 
         if (buf[1] == 'M')
             accessData(addr);
     }
-
-    if (verbosity)
-        printf("\n");
 
     fclose(trace_fp);
 }
