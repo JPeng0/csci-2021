@@ -22,46 +22,32 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-    int i,j,t0,t1,t2,t3,t4,t5,t6,t7;
+    int i,j,k,t0,t1,t2,t3,t4,t5,t6,t7;
 
-    for (i=0; i<N; i++) {
-        for (j=0; j<M; j += 8) {
-            t0 = A[i][j];
-            t1 = A[i][j+1];
-            t2 = A[i][j+2];
-            t3 = A[i][j+3];
-            t4 = A[i][j+4];
-            t5 = A[i][j+5];
-            t6 = A[i][j+6];
-            t7 = A[i][j+7];
+    // transpose 8x8 blocks.
+    for (i=0; i<N; i+=8) {
+        for (j=0; j<M; j+=8) {
 
-            switch (M-j) {
-                case 8:
-                    B[i][j+7] = t7;
-                case 7:
-                    B[i][j+6] = t6;
-                case 6:
-                    B[i][j+5] = t5;
-                case 5:
-                    B[i][j+4] = t4;
-                case 4:
-                    B[i][j+3] = t3;
-                case 3:
-                    B[i][j+2] = t2;
-                case 2:
-                    B[i][j+1] = t1;
-                case 1:
-                    B[i][j] = t0;
-                    break;
-                default:
-                    B[i][j+7] = t7;
-                    B[i][j+6] = t6;
-                    B[i][j+5] = t5;
-                    B[i][j+4] = t4;
-                    B[i][j+3] = t3;
-                    B[i][j+2] = t2;
-                    B[i][j+1] = t1;
-                    B[i][j] = t0;
+            // cycle through the block.
+            for (k=0, k<8, k++) {
+                t0 = A[i+k][j];
+                t1 = A[i+k][j+1];
+                t2 = A[i+k][j+2];
+                t3 = A[i+k][j+3];
+                t4 = A[i+k][j+4];
+                t5 = A[i+k][j+5];
+                t6 = A[i+k][j+6];
+                t7 = A[i+k][j+7];
+
+                // todo, make work for M,N non-multiples of 8
+                B[i+7][j+k] = t7;
+                B[i+6][j+k] = t6;
+                B[i+5][j+k] = t5;
+                B[i+4][j+k] = t4;
+                B[i+3][j+k] = t3;
+                B[i+2][j+k] = t2;
+                B[i+1][j+k] = t1;
+                B[i][j+k] = t0;
             }
         }
     }
