@@ -1,4 +1,4 @@
-5/*
+/*
  * trans.c - Matrix transpose B = A^T
  *
  * Each transpose function must have a prototype of the form:
