@@ -1,4 +1,4 @@
-/*
+5/*
  * trans.c - Matrix transpose B = A^T
  *
  * Each transpose function must have a prototype of the form:
@@ -40,14 +40,14 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                 t7 = A[i+k][j+7];
 
                 // todo, make work for M,N non-multiples of 8
-                B[i+7][j+k] = t7;
-                B[i+6][j+k] = t6;
-                B[i+5][j+k] = t5;
-                B[i+4][j+k] = t4;
-                B[i+3][j+k] = t3;
-                B[i+2][j+k] = t2;
-                B[i+1][j+k] = t1;
-                B[i][j+k] = t0;
+                B[j+7][i+k] = t7;
+                B[j+6][i+k] = t6;
+                B[j+5][i+k] = t5;
+                B[j+4][i+k] = t4;
+                B[j+3][i+k] = t3;
+                B[j+2][i+k] = t2;
+                B[j+1][i+k] = t1;
+                B[j][i+k] = t0;
             }
         }
     }
