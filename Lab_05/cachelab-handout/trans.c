@@ -29,7 +29,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         for (j=0; j<M; j+=8) {
 
             // cycle through the block.
-            for (k=0, k<8, k++) {
+            for (k=0; k<8; k++) {
                 t0 = A[i+k][j];
                 t1 = A[i+k][j+1];
                 t2 = A[i+k][j+2];
