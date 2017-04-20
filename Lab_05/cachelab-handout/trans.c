@@ -85,23 +85,51 @@ void trans_32_32(int M, int N, int A[N][M], int B[M][N])
  */
 void trans_64_64(int M, int N, int A[N][M], int B[M][N])
 {
-    int i,j,k,t0,t1,t2,t3;
+    int i,j,k,t0,t1,t2,t3,t4,t5,t6,t7;
 
-    // Transpose 4x4 blocks.
-    for (i=0; i<N; i+=4) {
-        for (j=0; j<M; j+=4) {
+    // Transpose 8x8 blocks (in two 8x4 sub-blocks).
+    for (i=0; i<N; i+=8) {
+        for (j=0; j<M; j+=8) {
 
-            // Cycle through the block.
-            for (k=0; k<4; k++) {
-                t0 = A[i+k][j];
-                t1 = A[i+k][j+1];
-                t2 = A[i+k][j+2];
-                t3 = A[i+k][j+3];
+            // Cycle through the first 8x4 block.
+            for (k=0; k<8; k++) {
+                t0 = A[j+k][i];
+                t1 = A[j+k][i+1];
+                t2 = A[j+k][i+2];
+                t3 = A[j+k][i+3];
 
-                B[j+3][i+k] = t3;
-                B[j+2][i+k] = t2;
-                B[j+1][i+k] = t1;
-                B[j][i+k] = t0;
+                // On first time through loop, store heads of transposed rows for
+                // when they are actually accessed (reduces misses).
+                if (k == 0) {
+                    t4 = A[j+k][i+4];
+                    t5 = A[j+k][i+5];
+                    t6 = A[j+k][i+6];
+                    t7 = A[j+k][i+7];
+                }
+
+                B[i][j+k] = t0;
+                B[i+1][j+k] = t1;
+                B[i+2][j+k] = t2;
+                B[i+3][j+k] = t3;
+            }
+
+            // Insert the stored first elements for the next 8x4 block.
+            B[i+4][j] = t4;
+            B[i+5][j] = t5;
+            B[i+6][j] = t6;
+            B[i+7][j] = t7;
+
+            // Cycle through what remains of the next 8x4 block.
+            for (k=1; k<8; k++) {
+                t0 = A[j+k][i+4];
+                t1 = A[j+k][i+5];
+                t2 = A[j+k][i+6];
+                t3 = A[j+k][i+7];
+
+                B[i+4][j+k] = t0;
+                B[i+5][j+k] = t1;
+                B[i+6][j+k] = t2;
+                B[i+7][j+k] = t3;
             }
         }
     }
