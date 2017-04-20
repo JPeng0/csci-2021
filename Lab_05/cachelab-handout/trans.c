@@ -1,6 +1,8 @@
 /*
  * trans.c - Matrix transpose B = A^T
  *
+ *  Kris Swann, swann013
+ *
  * Each transpose function must have a prototype of the form:
  * void trans(int M, int N, int A[N][M], int B[M][N]);
  *
