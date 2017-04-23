@@ -64,11 +64,12 @@ mem_addr_t set_index_mask;
  */
 void initCache()
 {
+    int i,j;
+
     cache = malloc(S * sizeof(cache_set_t));
-    int i;
+
     for (i=0; i<S; i++) {
         cache[i] = malloc(E * sizeof(cache_line_t));
-        int j;
         for (j=0; j<E; j++) {
             cache[i][j].valid = 0;
             cache[i][j].tag = 0;
@@ -104,6 +105,7 @@ void accessData(mem_addr_t addr)
     int set = set_index_mask & (addr >> b);
     int tag = addr >> (b+s);
 
+    // Check if the tag is valid in any of the lines of the set (hit).
     int i;
     for (i=0; i<E; i++){
         if (cache[set][i].tag == tag && cache[set][i].valid){
@@ -116,6 +118,7 @@ void accessData(mem_addr_t addr)
 
     // If not a hit, must be a miss.
 
+    // Find which line in the set to evict.
     int max_mru = -1;
     int evicted_line = 0;
 
@@ -130,6 +133,7 @@ void accessData(mem_addr_t addr)
         }
     }
 
+    // Update the cache.
     if (cache[set][evicted_line].valid == 1)
         eviction_count++;
 
